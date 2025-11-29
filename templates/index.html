@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Linux DNS Resolver Tool</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-light: #f2f5f9;
+            --bg-dark: #0b1120;
+            --card-light: #ffffff;
+            --card-dark: #111827;
+            --text-light: #111827;
+            --text-dark: #e5e7eb;
+            --accent: #0d6efd;
+        }
+
+        body {
+            background: var(--bg-light);
+            color: var(--text-light);
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body.dark-mode {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .card-custom {
+            border-radius: 14px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+            background: var(--card-light);
+        }
+
+        body.dark-mode .card-custom {
+            background: var(--card-dark);
+            border: 1px solid #1f2937;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 8px;
+            border-left: 5px solid var(--accent);
+            padding-left: 10px;
+        }
+
+        pre {
+            background: #020617;
+            color: #a5f3fc;
+            border-radius: 10px;
+            padding: 16px;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.60);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+        }
+        #loading-overlay .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* History pills */
+        .history-pill {
+            cursor: pointer;
+        }
+
+        /* Dark mode tweaks */
+        body.dark-mode .navbar,
+        body.dark-mode .offcanvas,
+        body.dark-mode .dropdown-menu {
+            background-color: #020617 !important;
+        }
+
+        body.dark-mode .navbar-brand,
+        body.dark-mode .nav-link {
+            color: #e5e7eb !important;
+        }
+
+        body.dark-mode .section-title {
+            border-left-color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading spinner overlay -->
+<div id="loading-overlay">
+    <div class="text-center text-light">
+        <div class="spinner-border" role="status"></div>
+        <div class="mt-3 fw-semibold">Resolving DNS records...</div>
+    </div>
+</div>
+
+<!-- Navbar with logo and dark mode toggle -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <!-- Replace src with your logo file if you have one -->
+            <img src="./static/linux-logo.png" alt="Logo" width="100" class="me-2 rounded">
+            <span class="brand-title">Linux DNS Resolver</span>
+        </a>
+
+        <div class="ms-auto d-flex align-items-center">
+            <span class="me-2 small">Dark mode</span>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <!-- Left: Form + history -->
+        <div class="col-12 col-lg-4">
+            <div class="card card-custom p-3 mb-3">
+                <h4 class="mb-3 text-primary">🔍 DNS Lookup</h4>
+                <form method="POST" id="dns-form">
+                    <div class="mb-3">
+                        <input
+                            type="text"
+                            name="domain"
+                            class="form-control form-control-lg"
+                            placeholder="example.com"
+                            value="{{ current_domain or '' }}"
+                            required
+                        >
+                    </div>
+                    <button class="btn btn-primary btn-lg w-100" type="submit">
+                        Resolve
+                    </button>
+                </form>
+            </div>
+
+            <!-- History -->
+            <div class="card card-custom p-3">
+                <h5 class="mb-3">🕑 Recent Domains</h5>
+                {% if history %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for d in history %}
+                            <form method="POST" class="m-0">
+                                <input type="hidden" name="domain" value="{{ d }}">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-secondary history-pill">
+                                    {{ d }}
+                                </button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No history yet. Start by resolving a domain.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: Results -->
+        <div class="col-12 col-lg-8">
+            {% if dns_data %}
+                <h4 class="section-title">Results for: <span class="text-primary">{{ current_domain }}</span></h4>
+
+                <div class="accordion" id="dnsAccordion">
+
+                    <!-- NS -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingNS">
+                            <button class="accordion-button" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseNS"
+                                    aria-expanded="true"
+                                    aria-controls="collapseNS">
+                                NS Records
+                            </button>
+                        </h2>
+                        <div id="collapseNS" class="accordion-collapse collapse show"
+                             aria-labelledby="headingNS" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.ns %}
+                                    <ul class="list-group">
+                                        {% for item in dns_data.ns %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-danger mb-0">No NS Records found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingA">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseA"
+                                    aria-expanded="false"
+                                    aria-controls="collapseA">
+                                A Records
+                            </button>
+                        </h2>
+                        <div id="collapseA" class="accordion-collapse collapse"
+                             aria-labelledby="headingA" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.a %}
+                                    <ul class="list-group">
+                                        {% for item in dns_data.a %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-danger mb-0">No A Records found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CNAME -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingCNAME">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseCNAME"
+                                    aria-expanded="false"
+                                    aria-controls="collapseCNAME">
+                                CNAME Record (www)
+                            </button>
+                        </h2>
+                        <div id="collapseCNAME" class="accordion-collapse collapse"
+                             aria-labelledby="headingCNAME" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.cname %}
+                                    <ul class="list-group">
+                                        {% for item in dns_data.cname %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-danger mb-0">No CNAME record found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MX -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingMX">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseMX"
+                                    aria-expanded="false"
+                                    aria-controls="collapseMX">
+                                MX Records
+                            </button>
+                        </h2>
+                        <div id="collapseMX" class="accordion-collapse collapse"
+                             aria-labelledby="headingMX" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.mx %}
+                                    <ul class="list-group">
+                                        {% for item in dns_data.mx %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-danger mb-0">No MX records found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TXT/SPF -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingTXT">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseTXT"
+                                    aria-expanded="false"
+                                    aria-controls="collapseTXT">
+                                TXT / SPF Records
+                            </button>
+                        </h2>
+                        <div id="collapseTXT" class="accordion-collapse collapse"
+                             aria-labelledby="headingTXT" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.txt %}
+                                    <ul class="list-group">
+                                        {% for item in dns_data.txt %}
+                                            <li class="list-group-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-danger mb-0">No TXT/SPF found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PTR -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingPTR">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapsePTR"
+                                    aria-expanded="false"
+                                    aria-controls="collapsePTR">
+                                PTR Record
+                            </button>
+                        </h2>
+                        <div id="collapsePTR" class="accordion-collapse collapse"
+                             aria-labelledby="headingPTR" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.ptr %}
+                                    <pre>{{ dns_data.ptr }}</pre>
+                                {% else %}
+                                    <p class="text-danger mb-0">No PTR found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reverse Lookup -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingReverse">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseReverse"
+                                    aria-expanded="false"
+                                    aria-controls="collapseReverse">
+                                Reverse Lookup
+                            </button>
+                        </h2>
+                        <div id="collapseReverse" class="accordion-collapse collapse"
+                             aria-labelledby="headingReverse" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                <pre>{{ dns_data.reverse or "Not Available" }}</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WHOIS -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingWHOIS">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseWHOIS"
+                                    aria-expanded="false"
+                                    aria-controls="collapseWHOIS">
+                                WHOIS Information
+                            </button>
+                        </h2>
+                        <div id="collapseWHOIS" class="accordion-collapse collapse"
+                             aria-labelledby="headingWHOIS" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.whois %}
+                                    <pre>{{ dns_data.whois | tojson(indent=2) }}</pre>
+                                {% else %}
+                                    <p class="text-danger mb-0">WHOIS info not available</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SOA -->
+                    <div class="accordion-item card-custom mb-2">
+                        <h2 class="accordion-header" id="headingSOA">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseSOA"
+                                    aria-expanded="false"
+                                    aria-controls="collapseSOA">
+                                SOA Records
+                            </button>
+                        </h2>
+                        <div id="collapseSOA" class="accordion-collapse collapse"
+                             aria-labelledby="headingSOA" data-bs-parent="#dnsAccordion">
+                            <div class="accordion-body">
+                                {% if dns_data.soa %}
+                                    <pre>{{ dns_data.soa | tojson(indent=2) }}</pre>
+                                {% else %}
+                                    <p class="text-danger mb-0">No SOA record found</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            {% else %}
+                <div class="card card-custom p-4">
+                    <p class="mb-0 text-muted">
+                        Enter a domain on the left to see DNS details here.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS + Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Dark mode toggle with localStorage
+    const body = document.body;
+    const switchEl = document.getElementById('darkModeSwitch');
+    const storedTheme = localStorage.getItem('dns-dark-mode');
+
+    if (storedTheme === 'on') {
+        body.classList.add('dark-mode');
+        switchEl.checked = true;
+    }
+
+    switchEl.addEventListener('change', () => {
+        if (switchEl.checked) {
+            body.classList.add('dark-mode');
+            localStorage.setItem('dns-dark-mode', 'on');
+        } else {
+            body.classList.remove('dark-mode');
+            localStorage.setItem('dns-dark-mode', 'off');
+        }
+    });
+
+    // Show loading overlay on form submit
+    const form = document.getElementById('dns-form');
+    const overlay = document.getElementById('loading-overlay');
+
+    form.addEventListener('submit', () => {
+        overlay.style.display = 'flex';
+    });
+</script>
+
+</body>
+</html>
