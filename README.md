@@ -11,6 +11,7 @@ To get brew, check out this https://brew.sh
 To compile and run "dnsresolver" tool.
 Create Pythong virtual environment
 > $ python3 -m venv venv
+
 > $ source venv/bin/activate
 
 Install required modules inside the virtual environment
