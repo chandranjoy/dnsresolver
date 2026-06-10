@@ -12,6 +12,7 @@ To compile and run "dnsresolver" tool.
 Create Pythong virtual environment
 > $cd /opt/dnsresolver
 Create .env file
+>
 > $ python3 -c "import secrets; print(secrets.token_hex(32))"
 > 3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
 > $ cat .env
