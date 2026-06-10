@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
-#If you are using gunicorn then enable line 3 and disable lines 4 and 5
-#gunicorn --bind 0.0.0.0:5000 app:app --error-logfile /var/log/dnsresolver-error.log --log-level error &
-export FLASK_APP=app.py
-flask run --host=0.0.0.0 --port=5000 > /var/log/dnsresolver-error.log 2>&1 &
+log_file="/var/log/dnsresolver-error.log"
+app_dir="/opt/dnsresolver"
+app_port="5001"
+app_host="127.0.0.1"
+
+# SECRET_KEY must be set before starting.
+# Either export it in the environment or place it in $app_dir/.env
+if [ -f "$app_dir/.env" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$app_dir/.env"
+    set +a
+fi
+
+if [ -z "$SECRET_KEY" ]; then
+    echo "ERROR: SECRET_KEY is not set. Create $app_dir/.env with SECRET_KEY=<value>."
+    exit 1
+fi
+
+cd "$app_dir"
+source venv/bin/activate
+gunicorn --bind "$app_host:$app_port" app:app --error-logfile "$log_file" --log-level error &

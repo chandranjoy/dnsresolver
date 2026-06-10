@@ -2,449 +2,892 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Linux DNS Resolver Tool</title>
-
-    <!-- Bootstrap CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Resolver — OpenInfra Systems</title>
+    <meta name="description" content="Open-source DNS lookup tool. Resolve NS, A, MX, TXT, CNAME, PTR, SOA records and WHOIS data in one place.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        /* ── OIS Design Tokens ── */
         :root {
-            --bg-light: #f2f5f9;
-            --bg-dark: #0b1120;
-            --card-light: #ffffff;
-            --card-dark: #111827;
-            --text-light: #111827;
-            --text-dark: #e5e7eb;
-            --accent: #0d6efd;
+            --dark:         #0f172a;
+            --darker:       #0a1020;
+            --white:        #ffffff;
+            --accent:       #3aa13a;
+            --accent-dark:  #2f8530;
+            --accent-light: #62c262;
+            --gray-300:     #cbd5e1;
+            --gray-400:     #94a3b8;
+            --gray-500:     #64748b;
+            --gray-600:     #475569;
+            --glass-bg:     rgba(23, 33, 56, 0.62);
+            --glass-border: rgba(255, 255, 255, 0.13);
+            --glass-shadow: 0 10px 40px -8px rgba(0,0,0,0.55), 0 4px 14px -4px rgba(0,0,0,0.35);
+            --glass-blur:   saturate(170%) blur(22px);
         }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: var(--bg-light);
-            color: var(--text-light);
-            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Outfit', sans-serif;
+            background: var(--dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
         }
 
-        body.dark-mode {
-            background: var(--bg-dark);
-            color: var(--text-dark);
+        /* ── HEADER ── */
+        .site-header {
+            background: rgba(10, 16, 32, 0.88);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.9rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
         }
 
-        .brand-title {
+        .header-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.95rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .header-logo-img {
+            height: 50px;
+            width: auto;
+            background: rgba(255, 255, 255, 0.94);
+            padding: 6px 13px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            display: block;
+        }
+
+        .header-text-block .header-title {
+            font-size: 1.1rem;
             font-weight: 700;
-            letter-spacing: 0.03em;
+            color: var(--white);
+            letter-spacing: -0.3px;
+            line-height: 1.2;
         }
 
-        .card-custom {
-            border-radius: 14px;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
-            background: var(--card-light);
+        .header-text-block .header-sub {
+            font-size: 0.72rem;
+            color: var(--accent-light);
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
-        body.dark-mode .card-custom {
-            background: var(--card-dark);
-            border: 1px solid #1f2937;
-        }
-
-        .section-title {
+        .header-pill {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.32rem 0.85rem;
+            background: linear-gradient(135deg, rgba(58,161,58,0.14), rgba(30,107,184,0.1));
+            border: 1px solid rgba(58,161,58,0.28);
+            border-radius: 50px;
+            font-size: 0.7rem;
             font-weight: 600;
-            margin-top: 25px;
-            margin-bottom: 8px;
-            border-left: 5px solid var(--accent);
-            padding-left: 10px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--accent-light);
+            white-space: nowrap;
+        }
+
+        .header-pill::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            box-shadow: 0 0 8px var(--accent-light);
+            animation: blink 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.45; transform: scale(0.75); }
+        }
+
+        /* ── MAIN ── */
+        main {
+            flex: 1;
+            padding: 2.5rem 2rem;
+            max-width: 1440px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page-intro {
+            margin-bottom: 2rem;
+        }
+
+        .page-intro .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.6rem;
+        }
+
+        .page-intro .eyebrow::before {
+            content: '';
+            width: 22px; height: 2px;
+            background: var(--accent);
+        }
+
+        .page-intro h1 {
+            font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            line-height: 1.15;
+            margin-bottom: 0.4rem;
+        }
+
+        .page-intro h1 span { color: var(--accent); }
+
+        .page-intro p {
+            font-size: 0.92rem;
+            color: var(--gray-400);
+            font-weight: 300;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* ── GLASS PANEL ── */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            box-shadow: var(--glass-shadow);
+            padding: 1.5rem;
+        }
+
+        .panel-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .panel-label::before {
+            content: '';
+            width: 18px; height: 2px;
+            background: var(--accent);
+        }
+
+        /* ── SEARCH FORM ── */
+        .dns-input {
+            width: 100%;
+            padding: 0.85rem 1.1rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.97rem;
+            font-weight: 400;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            color: var(--white);
+            border-radius: 12px;
+            outline: none;
+            margin-bottom: 0.85rem;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .dns-input::placeholder { color: var(--gray-500); }
+
+        .dns-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(58,161,58,0.15);
+        }
+
+        .btn-resolve {
+            width: 100%;
+            padding: 0.88rem 1.5rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.93rem;
+            font-weight: 600;
+            color: var(--white);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            letter-spacing: 0.4px;
+            transition: transform 0.22s, box-shadow 0.22s;
+            box-shadow: 0 4px 18px rgba(58,161,58,0.38);
+        }
+
+        .btn-resolve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(58,161,58,0.52);
+        }
+
+        /* ── HISTORY ── */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .history-entry {
+            display: flex;
+        }
+
+        .history-btn {
+            flex: 1;
+            text-align: left;
+            padding: 0.55rem 0.85rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--gray-300);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .history-btn:hover {
+            background: rgba(58,161,58,0.11);
+            color: var(--white);
+            border-color: rgba(58,161,58,0.28);
+        }
+
+        .empty-note {
+            font-size: 0.84rem;
+            color: var(--gray-500);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* ── RESULTS SECTION ── */
+        .results-meta {
+            margin-bottom: 1.25rem;
+        }
+
+        .results-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .results-eyebrow::before {
+            content: '';
+            width: 18px; height: 2px;
+            background: var(--accent);
+        }
+
+        .results-meta h2 {
+            font-size: 1.08rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .results-meta h2 span { color: var(--accent); }
+
+        /* Accordion — dark overrides */
+        .accordion-item {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .accordion-button {
+            background: transparent !important;
+            color: var(--white) !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            padding: 0.95rem 1.25rem !important;
+            letter-spacing: 0.2px;
+            box-shadow: none !important;
+        }
+
+        .accordion-button::after { filter: invert(1) !important; }
+
+        .accordion-button:not(.collapsed) {
+            color: var(--accent-light) !important;
+            background: rgba(58,161,58,0.09) !important;
+        }
+
+        .accordion-body {
+            padding: 0 1.25rem 1rem !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+
+        .list-group-item {
+            background: rgba(255,255,255,0.04) !important;
+            color: var(--gray-300) !important;
+            border-color: rgba(255,255,255,0.07) !important;
+            font-size: 0.86rem !important;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+            word-break: break-all;
         }
 
         pre {
-            background: #020617;
-            color: #a5f3fc;
+            background: rgba(2, 6, 23, 0.65) !important;
+            color: #a5f3fc !important;
             border-radius: 10px;
-            padding: 16px;
+            padding: 1rem 1.1rem;
             white-space: pre-wrap;
-            font-size: 0.9rem;
+            word-break: break-all;
+            font-size: 0.82rem;
+            border: 1px solid rgba(255,255,255,0.06);
+            margin: 0;
         }
 
-        /* Loading overlay */
+        .text-danger { color: var(--gray-500) !important; font-style: italic; font-size: 0.85rem !important; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            width: 62px; height: 62px;
+            margin: 0 auto 1.25rem;
+            background: linear-gradient(135deg, rgba(58,161,58,0.13), rgba(30,107,184,0.1));
+            border: 1px solid rgba(58,161,58,0.22);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-icon svg {
+            width: 26px; height: 26px;
+            stroke: var(--accent-light);
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .empty-state h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.45rem;
+        }
+
+        .empty-state p {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            font-weight: 300;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        /* ── LOADING OVERLAY ── */
         #loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.60);
+            background: rgba(10, 16, 32, 0.72);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1050;
         }
-        #loading-overlay .spinner-border {
-            width: 3rem;
-            height: 3rem;
+
+        .loading-box {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 2.25rem 3rem;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
         }
 
-        /* History pills */
-        .history-pill {
-            cursor: pointer;
+        .loading-spinner {
+            width: 3rem; height: 3rem;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin: 0 auto 1rem;
         }
 
-        /* Dark mode tweaks */
-        body.dark-mode .navbar,
-        body.dark-mode .offcanvas,
-        body.dark-mode .dropdown-menu {
-            background-color: #020617 !important;
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-box p {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-weight: 300;
         }
 
-        body.dark-mode .navbar-brand,
-        body.dark-mode .nav-link {
-            color: #e5e7eb !important;
+        /* ── FOOTER ── */
+        footer {
+            background: var(--darker);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            color: var(--gray-400);
+            padding: 2.5rem 2rem 1.5rem;
+            margin-top: auto;
         }
 
-        body.dark-mode .section-title {
-            border-left-color: #38bdf8;
+        .footer-inner {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .footer-top {
+            display: flex;
+            gap: 3rem;
+            flex-wrap: wrap;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer-brand {
+            flex: 1 1 280px;
+        }
+
+        .footer-brand-logo {
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand-logo img {
+            height: 52px;
+            background: rgba(255,255,255,0.92);
+            padding: 6px 14px;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .footer-brand p {
+            font-size: 0.87rem;
+            font-weight: 300;
+            line-height: 1.65;
+            color: var(--gray-400);
+            max-width: 310px;
+        }
+
+        .footer-col {
+            flex: 1 1 150px;
+        }
+
+        .footer-col h4 {
+            color: var(--white);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .footer-col a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.87rem;
+            font-weight: 300;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover { color: var(--accent); }
+
+        .footer-bottom {
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .footer-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.5rem;
+        }
+
+        .footer-bottom p {
+            font-size: 0.78rem;
+            color: var(--gray-500);
+            font-weight: 300;
+            margin: 0;
+        }
+
+        .footer-bottom a { color: var(--accent); text-decoration: none; }
+        .footer-bottom a:hover { text-decoration: underline; }
+
+        .footer-note {
+            font-size: 0.77rem;
+            color: var(--gray-600);
+            font-weight: 300;
+            line-height: 1.65;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 0.75rem;
+        }
+
+        .footer-note strong { color: var(--gray-500); font-weight: 500; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 960px) {
+            .layout-grid { grid-template-columns: 1fr; }
+            main { padding: 1.75rem 1.25rem; }
+        }
+
+        @media (max-width: 640px) {
+            .site-header { padding: 0.75rem 1.1rem; }
+            .header-pill { display: none; }
+            footer { padding: 2rem 1.25rem 1.25rem; }
+            .footer-top { gap: 1.75rem; }
         }
     </style>
 </head>
 <body>
 
-<!-- Loading spinner overlay -->
+<!-- Loading overlay -->
 <div id="loading-overlay">
-    <div class="text-center text-light">
-        <div class="spinner-border" role="status"></div>
-        <div class="mt-3 fw-semibold">Resolving DNS records...</div>
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <p>Resolving DNS records&hellip;</p>
     </div>
 </div>
 
-<!-- Navbar with logo and dark mode toggle -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-    <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="#">
-            <!-- Replace src with your logo file if you have one -->
-            <img src="./static/linux-logo.png" alt="Logo" width="100" class="me-2 rounded">
-            <span class="brand-title">Linux DNS Resolver</span>
-        </a>
-
-        <div class="ms-auto d-flex align-items-center">
-            <span class="me-2 small">Dark mode</span>
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" id="darkModeSwitch">
-            </div>
+<!-- Header -->
+<header class="site-header">
+    <a class="header-logo-wrap" href="#">
+        <img class="header-logo-img" src="{{ url_for('static', filename='logo.webp') }}" alt="OpenInfra Systems">
+        <div class="header-text-block">
+            <div class="header-title">DNS Resolver</div>
+            <div class="header-sub">OpenInfra Systems</div>
         </div>
-    </div>
-</nav>
+    </a>
+    <span class="header-pill">Open Source Tool</span>
+</header>
 
-<div class="container my-4">
-    <div class="row g-4">
-        <!-- Left: Form + history -->
-        <div class="col-12 col-lg-4">
-            <div class="card card-custom p-3 mb-3">
-                <h4 class="mb-3 text-primary">🔍 DNS Lookup</h4>
+<!-- Main content -->
+<main>
+    <div class="page-intro">
+        <div class="eyebrow">Infrastructure Tooling</div>
+        <h1>Domain <span>DNS</span> Intelligence</h1>
+        <p>Resolve NS, A, MX, TXT, CNAME, PTR, SOA records and WHOIS data in one lookup.</p>
+    </div>
+
+    <div class="layout-grid">
+
+        <!-- Left panel: form + history -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+            <div class="glass-panel">
+                <div class="panel-label">DNS Lookup</div>
                 <form method="POST" id="dns-form">
-                    <div class="mb-3">
-                        <input
-                            type="text"
-                            name="domain"
-                            class="form-control form-control-lg"
-                            placeholder="example.com"
-                            value="{{ current_domain or '' }}"
-                            required
-                        >
-                    </div>
-                    <button class="btn btn-primary btn-lg w-100" type="submit">
-                        Resolve
-                    </button>
+                    <input
+                        class="dns-input"
+                        type="text"
+                        name="domain"
+                        placeholder="example.com"
+                        value="{{ current_domain or '' }}"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                    <button class="btn-resolve" type="submit">Resolve Records</button>
                 </form>
             </div>
 
-            <!-- History -->
-            <div class="card card-custom p-3">
-                <h5 class="mb-3">🕑 Recent Domains</h5>
+            <div class="glass-panel">
+                <div class="panel-label">Recent Domains</div>
                 {% if history %}
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="history-list">
                         {% for d in history %}
-                            <form method="POST" class="m-0">
+                            <form method="POST" class="history-entry">
                                 <input type="hidden" name="domain" value="{{ d }}">
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-secondary history-pill">
-                                    {{ d }}
-                                </button>
+                                <button type="submit" class="history-btn">{{ d }}</button>
                             </form>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted mb-0">No history yet. Start by resolving a domain.</p>
+                    <p class="empty-note">No history yet. Resolve a domain to start.</p>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Right: Results -->
-        <div class="col-12 col-lg-8">
+        <!-- Right panel: results -->
+        <div>
             {% if dns_data %}
-                <h4 class="section-title">Results for: <span class="text-primary">{{ current_domain }}</span></h4>
+                <div class="results-meta">
+                    <div class="results-eyebrow">Query Results</div>
+                    <h2>Records for: <span>{{ current_domain }}</span></h2>
+                </div>
 
                 <div class="accordion" id="dnsAccordion">
 
                     <!-- NS -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingNS">
-                            <button class="accordion-button" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseNS"
-                                    aria-expanded="true"
-                                    aria-controls="collapseNS">
-                                NS Records
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hNS">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cNS" aria-expanded="true" aria-controls="cNS">
+                                NS &mdash; Name Servers
                             </button>
                         </h2>
-                        <div id="collapseNS" class="accordion-collapse collapse show"
-                             aria-labelledby="headingNS" data-bs-parent="#dnsAccordion">
+                        <div id="cNS" class="accordion-collapse collapse show" aria-labelledby="hNS" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.ns %}
-                                    <ul class="list-group">
-                                        {% for item in dns_data.ns %}
-                                            <li class="list-group-item">{{ item }}</li>
-                                        {% endfor %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in dns_data.ns %}<li class="list-group-item">{{ item }}</li>{% endfor %}
                                     </ul>
-                                {% else %}
-                                    <p class="text-danger mb-0">No NS Records found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No NS records found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- A -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingA">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseA"
-                                    aria-expanded="false"
-                                    aria-controls="collapseA">
-                                A Records
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hA">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cA" aria-expanded="false" aria-controls="cA">
+                                A &mdash; IPv4 Addresses
                             </button>
                         </h2>
-                        <div id="collapseA" class="accordion-collapse collapse"
-                             aria-labelledby="headingA" data-bs-parent="#dnsAccordion">
+                        <div id="cA" class="accordion-collapse collapse" aria-labelledby="hA" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.a %}
-                                    <ul class="list-group">
-                                        {% for item in dns_data.a %}
-                                            <li class="list-group-item">{{ item }}</li>
-                                        {% endfor %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in dns_data.a %}<li class="list-group-item">{{ item }}</li>{% endfor %}
                                     </ul>
-                                {% else %}
-                                    <p class="text-danger mb-0">No A Records found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No A records found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- CNAME -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingCNAME">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseCNAME"
-                                    aria-expanded="false"
-                                    aria-controls="collapseCNAME">
-                                CNAME Record (www)
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hCNAME">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cCNAME" aria-expanded="false" aria-controls="cCNAME">
+                                CNAME &mdash; www Alias
                             </button>
                         </h2>
-                        <div id="collapseCNAME" class="accordion-collapse collapse"
-                             aria-labelledby="headingCNAME" data-bs-parent="#dnsAccordion">
+                        <div id="cCNAME" class="accordion-collapse collapse" aria-labelledby="hCNAME" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.cname %}
-                                    <ul class="list-group">
-                                        {% for item in dns_data.cname %}
-                                            <li class="list-group-item">{{ item }}</li>
-                                        {% endfor %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in dns_data.cname %}<li class="list-group-item">{{ item }}</li>{% endfor %}
                                     </ul>
-                                {% else %}
-                                    <p class="text-danger mb-0">No CNAME record found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No CNAME record found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- MX -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingMX">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseMX"
-                                    aria-expanded="false"
-                                    aria-controls="collapseMX">
-                                MX Records
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hMX">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cMX" aria-expanded="false" aria-controls="cMX">
+                                MX &mdash; Mail Exchangers
                             </button>
                         </h2>
-                        <div id="collapseMX" class="accordion-collapse collapse"
-                             aria-labelledby="headingMX" data-bs-parent="#dnsAccordion">
+                        <div id="cMX" class="accordion-collapse collapse" aria-labelledby="hMX" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.mx %}
-                                    <ul class="list-group">
-                                        {% for item in dns_data.mx %}
-                                            <li class="list-group-item">{{ item }}</li>
-                                        {% endfor %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in dns_data.mx %}<li class="list-group-item">{{ item }}</li>{% endfor %}
                                     </ul>
-                                {% else %}
-                                    <p class="text-danger mb-0">No MX records found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No MX records found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- TXT/SPF -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingTXT">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseTXT"
-                                    aria-expanded="false"
-                                    aria-controls="collapseTXT">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hTXT">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cTXT" aria-expanded="false" aria-controls="cTXT">
                                 TXT / SPF Records
                             </button>
                         </h2>
-                        <div id="collapseTXT" class="accordion-collapse collapse"
-                             aria-labelledby="headingTXT" data-bs-parent="#dnsAccordion">
+                        <div id="cTXT" class="accordion-collapse collapse" aria-labelledby="hTXT" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.txt %}
-                                    <ul class="list-group">
-                                        {% for item in dns_data.txt %}
-                                            <li class="list-group-item">{{ item }}</li>
-                                        {% endfor %}
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in dns_data.txt %}<li class="list-group-item">{{ item }}</li>{% endfor %}
                                     </ul>
-                                {% else %}
-                                    <p class="text-danger mb-0">No TXT/SPF found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No TXT / SPF records found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- PTR -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingPTR">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapsePTR"
-                                    aria-expanded="false"
-                                    aria-controls="collapsePTR">
-                                PTR Record
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hPTR">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cPTR" aria-expanded="false" aria-controls="cPTR">
+                                PTR &mdash; Reverse DNS
                             </button>
                         </h2>
-                        <div id="collapsePTR" class="accordion-collapse collapse"
-                             aria-labelledby="headingPTR" data-bs-parent="#dnsAccordion">
+                        <div id="cPTR" class="accordion-collapse collapse" aria-labelledby="hPTR" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.ptr %}
                                     <pre>{{ dns_data.ptr }}</pre>
-                                {% else %}
-                                    <p class="text-danger mb-0">No PTR found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No PTR record found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- Reverse Lookup -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingReverse">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseReverse"
-                                    aria-expanded="false"
-                                    aria-controls="collapseReverse">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hRev">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cRev" aria-expanded="false" aria-controls="cRev">
                                 Reverse Lookup
                             </button>
                         </h2>
-                        <div id="collapseReverse" class="accordion-collapse collapse"
-                             aria-labelledby="headingReverse" data-bs-parent="#dnsAccordion">
+                        <div id="cRev" class="accordion-collapse collapse" aria-labelledby="hRev" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
-                                <pre>{{ dns_data.reverse or "Not Available" }}</pre>
+                                <pre>{{ dns_data.reverse or "Not available" }}</pre>
                             </div>
                         </div>
                     </div>
 
                     <!-- WHOIS -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingWHOIS">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseWHOIS"
-                                    aria-expanded="false"
-                                    aria-controls="collapseWHOIS">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hWHOIS">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cWHOIS" aria-expanded="false" aria-controls="cWHOIS">
                                 WHOIS Information
                             </button>
                         </h2>
-                        <div id="collapseWHOIS" class="accordion-collapse collapse"
-                             aria-labelledby="headingWHOIS" data-bs-parent="#dnsAccordion">
+                        <div id="cWHOIS" class="accordion-collapse collapse" aria-labelledby="hWHOIS" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.whois %}
                                     <pre>{{ dns_data.whois | tojson(indent=2) }}</pre>
-                                {% else %}
-                                    <p class="text-danger mb-0">WHOIS info not available</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">WHOIS data not available</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
                     <!-- SOA -->
-                    <div class="accordion-item card-custom mb-2">
-                        <h2 class="accordion-header" id="headingSOA">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapseSOA"
-                                    aria-expanded="false"
-                                    aria-controls="collapseSOA">
-                                SOA Records
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="hSOA">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cSOA" aria-expanded="false" aria-controls="cSOA">
+                                SOA &mdash; Start of Authority
                             </button>
                         </h2>
-                        <div id="collapseSOA" class="accordion-collapse collapse"
-                             aria-labelledby="headingSOA" data-bs-parent="#dnsAccordion">
+                        <div id="cSOA" class="accordion-collapse collapse" aria-labelledby="hSOA" data-bs-parent="#dnsAccordion">
                             <div class="accordion-body">
                                 {% if dns_data.soa %}
                                     <pre>{{ dns_data.soa | tojson(indent=2) }}</pre>
-                                {% else %}
-                                    <p class="text-danger mb-0">No SOA record found</p>
-                                {% endif %}
+                                {% else %}<p class="text-danger mb-0">No SOA record found</p>{% endif %}
                             </div>
                         </div>
                     </div>
 
-                </div>
+                </div><!-- /accordion -->
+
             {% else %}
-                <div class="card card-custom p-4">
-                    <p class="mb-0 text-muted">
-                        Enter a domain on the left to see DNS details here.
-                    </p>
+                <div class="glass-panel">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
+                        </div>
+                        <h3>Ready to Resolve</h3>
+                        <p>Enter a domain name on the left to view all DNS records and WHOIS data.</p>
+                    </div>
                 </div>
             {% endif %}
         </div>
+
+    </div><!-- /layout-grid -->
+</main>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <a class="footer-brand-logo" href="https://openinfrasystems.com" target="_blank" rel="noopener">
+                    <img src="{{ url_for('static', filename='logo.webp') }}" alt="OpenInfra Systems">
+                </a>
+                <p>An open-source tool by OpenInfra Systems. DNS Resolver helps infrastructure teams inspect DNS configurations quickly, without depending on external web services.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4>Open Source</h4>
+                <ul>
+                    <li><a href="https://openinfrasystems.com" target="_blank" rel="noopener">OpenInfra Systems</a></li>
+                    <li><a href="mailto:info@openinfrasystems.com">info@openinfrasystems.com</a></li>
+                    <li><a href="https://github.com/openinfrasystems" target="_blank" rel="noopener">GitHub</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Records Resolved</h4>
+                <ul>
+                    <li><a href="#">NS &middot; A &middot; CNAME</a></li>
+                    <li><a href="#">MX &middot; TXT &middot; SPF</a></li>
+                    <li><a href="#">PTR &middot; SOA &middot; WHOIS</a></li>
+                    <li><a href="#">Reverse Lookup</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="footer-bottom-row">
+                <p>&copy; 2026 <a href="https://openinfrasystems.com" target="_blank" rel="noopener">OpenInfra Systems</a>. Open-source tool. Released under the MIT Licence.</p>
+                <p>
+                    <a href="mailto:info@openinfrasystems.com">info@openinfrasystems.com</a>
+                    &nbsp;&middot;&nbsp;
+                    <a href="https://openinfrasystems.com" target="_blank" rel="noopener">https://openinfrasystems.com</a>
+                </p>
+            </div>
+            <p class="footer-note">
+                <strong>No Warranty / No Guarantee:</strong>
+                This tool is provided as-is, without warranty of any kind, express or implied. DNS data is fetched live from public resolvers and may not reflect real-time propagation state. OpenInfra Systems assumes no responsibility for any decisions made based on the output of this tool. Use at your own risk.
+            </p>
+        </div>
     </div>
-</div>
+</footer>
 
-<!-- Bootstrap JS + Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    // Dark mode toggle with localStorage
-    const body = document.body;
-    const switchEl = document.getElementById('darkModeSwitch');
-    const storedTheme = localStorage.getItem('dns-dark-mode');
-
-    if (storedTheme === 'on') {
-        body.classList.add('dark-mode');
-        switchEl.checked = true;
-    }
-
-    switchEl.addEventListener('change', () => {
-        if (switchEl.checked) {
-            body.classList.add('dark-mode');
-            localStorage.setItem('dns-dark-mode', 'on');
-        } else {
-            body.classList.remove('dark-mode');
-            localStorage.setItem('dns-dark-mode', 'off');
-        }
-    });
-
-    // Show loading overlay on form submit
-    const form = document.getElementById('dns-form');
-    const overlay = document.getElementById('loading-overlay');
-
-    form.addEventListener('submit', () => {
-        overlay.style.display = 'flex';
+    document.getElementById('dns-form').addEventListener('submit', function () {
+        document.getElementById('loading-overlay').style.display = 'flex';
     });
 </script>
-
 </body>
 </html>

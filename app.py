@@ -1,10 +1,25 @@
+import os
 from flask import Flask, render_template, request, session
 import dns.resolver
 import socket
 import whois
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 app = Flask(__name__)
-app.secret_key = "FKDCtech2025"  # needed for session
+
+_secret_key = os.environ.get('SECRET_KEY')
+if not _secret_key:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. "
+        "Create a .env file with SECRET_KEY=<strong-random-value> "
+        "or export it in your shell before starting the app."
+    )
+app.secret_key = _secret_key
 
 def fetch_dns_info(domain_name):
     result = {}
@@ -122,4 +137,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8443)  # your custom port
+    app.run(debug=True, port=5001)  # your custom port
