@@ -6,12 +6,12 @@ Python based DNS resolver tool - Flask provides UI
 **MAC**
 > brew install python3
 To get brew, check out this https://brew.sh
-
+>
 **Linux**
 To compile and run "dnsresolver" tool.
 Create Pythong virtual environment
 > $cd /opt/dnsresolver
-Create .env file
+To create .env file
 
 > $ python3 -c "import secrets; print(secrets.token_hex(32))"
 > 3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
@@ -44,11 +44,10 @@ In case app is not starting, check the log file to troubleshoot further
 > $ tail -f /var/log/dnsresolver-error.log
 
 Make sure required python modules are installed in virtualenvironment.
-> i.e. dns.resolver, whois
+> i.e. dns.resolver, whois and gunicorn
 
 **IMPORTANT NOTE**
-Tested this tool in Ubuntu 24.04.x LTS server only. It's purely based on Python and Flask should work well 
-with other distros as well.
+Tested this tool in Ubuntu 24.04.x LTS server only. It's purely based on Python and Flask should work well with other distros as well.
 ******************
 
 <img width="1674" height="1013" alt="dnsresolver" src="https://github.com/user-attachments/assets/c89ad8e0-2de6-488c-b0ef-b5de1a18d7f0"/>
