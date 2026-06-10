@@ -8,6 +8,7 @@ Python based DNS resolver tool - Flask provides UI
 To get brew, check out this https://brew.sh
 >
 **Linux**
+
 To compile and run "dnsresolver" tool.
 Create Pythong virtual environment
 > $cd /opt/dnsresolver
