@@ -10,6 +10,15 @@ To get brew, check out this https://brew.sh
 **Linux**
 To compile and run "dnsresolver" tool.
 Create Pythong virtual environment
+> $cd /opt/dnsresolver
+Create .env file
+> $ python3 -c "import secrets; print(secrets.token_hex(32))"
+3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
+> $ cat .env
+# Copy this file to .env and set a strong random value for SECRET_KEY
+# Generate one with: python3 -c "import secrets; print(secrets.token_hex(32))"
+SECRET_KEY=3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
+
 > $ python3 -m venv venv
 
 > $ source venv/bin/activate
