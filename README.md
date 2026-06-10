@@ -51,5 +51,5 @@ Tested this tool in Ubuntu 24.04.x LTS server only. It's purely based on Python 
 with other distros as well.
 ******************
 
-src="<img width="1674" height="1013" alt="dnsresolver" src="https://github.com/user-attachments/assets/c89ad8e0-2de6-488c-b0ef-b5de1a18d7f0"/>
+<img width="1674" height="1013" alt="dnsresolver" src="https://github.com/user-attachments/assets/c89ad8e0-2de6-488c-b0ef-b5de1a18d7f0"/>
 
