@@ -50,6 +50,9 @@ Make sure required python modules are installed in virtualenvironment.
 **IMPORTANT NOTE**
 Tested this tool in Ubuntu 24.04.x LTS server only. It's purely based on Python and Flask should work well with other distros as well.
 ******************
+**dnsresolver tool Demo**
+https://dnsresolver.openinfrasystems.com
 
+**dnsresolver screenshot**
 <img width="1674" height="1013" alt="dnsresolver" src="https://github.com/user-attachments/assets/c89ad8e0-2de6-488c-b0ef-b5de1a18d7f0"/>
 
