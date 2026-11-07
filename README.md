@@ -1,58 +1,192 @@
-# dnsresolver
-Python based DNS resolver tool - Flask provides UI
+# DNS Resolver
 
-**Install Python 3 - Stable version**
+A Python-based DNS Resolver tool with a web-based user interface built using **Flask**.
 
-**MAC**
-> brew install python3
-To get brew, check out this https://brew.sh
->
-**Linux**
+## Features
 
-To compile and run "dnsresolver" tool.
-Create Pythong virtual environment
-> $cd /opt/dnsresolver
-To create .env file
+- DNS lookup and resolution using Python.
+- Web-based UI powered by Flask.
+- Domain information lookup using WHOIS.
+- Lightweight Python application.
+- Easy deployment using a Python virtual environment.
+- Runs on port `5000` by default.
 
-> $ python3 -c "import secrets; print(secrets.token_hex(32))"
-> 3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
+## Prerequisites
 
-> $ cat .env
+- Python 3 (stable version).
+- pip3 package manager.
+- Git (if cloning from the repository).
 
-> SECRET_KEY=3cccdfa1234567890362be70b3b59dfd40ec820c757ad1a457a81b0987654321
+## Installation
 
-> $ python3 -m venv venv
+### 1. Install Python 3
 
-> $ source venv/bin/activate
+**macOS**
 
-Install required modules inside the virtual environment
-> $ pip3 install flask dnspython python-whois
+Install Python 3 using Homebrew:
 
-Then start the tool, by default it will use port 5000
-> $ ./start.sh
+```bash
+brew install python3
+```
 
-Access dnsresolver via browser.
-> http://PUBLIC_IP:5000
+If Homebrew is not installed, refer to: https://brew.sh
 
-**If you would like to access with your subdomain (ssl), use nginx as reverse proxy and configure SSL**
-> [https://www.digitalocean.com/community/tutorials/how-to-set-up-uwsgi-and-nginx-to-serve-python-apps-on-ubuntu-14-04](https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-reverse-proxy-on-ubuntu-22-04)
+**Linux (Ubuntu/Debian)**
 
-To stop the app.
-> $ ./stop.sh
+```bash
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv
+```
 
-**Troubleshooting**
-In case app is not starting, check the log file to troubleshoot further
-> $ tail -f /var/log/dnsresolver-error.log
+### 2. Navigate to the Application Directory
 
-Make sure required python modules are installed in virtualenvironment.
-> i.e. dns.resolver, whois and gunicorn
+```bash
+cd /opt/dnsresolver
+```
 
-**IMPORTANT NOTE**
-Tested this tool in Ubuntu 24.04.x LTS server only. It's purely based on Python and Flask should work well with other distros as well.
-******************
-**dnsresolver tool Demo**
-https://dnsresolver.openinfrasystems.com
+### 3. Configure Environment Variables
 
-**dnsresolver screenshot**
-<img width="1674" height="1013" alt="dnsresolver" src="https://github.com/user-attachments/assets/c89ad8e0-2de6-488c-b0ef-b5de1a18d7f0"/>
+Create a secure Flask secret key:
 
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Create the `.env` file:
+
+```bash
+nano .env
+```
+
+Add the following configuration, replacing the example value with your generated secret key:
+
+```ini
+SECRET_KEY=your_generated_secret_key
+```
+
+**Important:** Keep your `.env` file private. Do not commit it to your Git repository.
+
+### 4. Create a Python Virtual Environment
+
+```bash
+python3 -m venv venv
+```
+
+Activate the virtual environment:
+
+```bash
+source venv/bin/activate
+```
+
+### 5. Install Required Python Packages
+
+Install the application dependencies:
+
+```bash
+pip3 install flask dnspython python-whois gunicorn
+```
+
+Ensure that all required packages are installed inside the virtual environment.
+
+## Starting the Application
+
+Once the installation and configuration are complete, start the DNS Resolver application:
+
+```bash
+./start.sh
+```
+
+The application listens on port `5000` by default.
+
+### Access the Web Interface
+
+Open your browser and navigate to:
+
+```text
+http://PUBLIC_IP:5000
+```
+
+Replace `PUBLIC_IP` with your server's public IP address.
+
+**Note:** Ensure that port `5000` is allowed through your server firewall if accessing the application directly.
+
+## Configure HTTPS Using Nginx
+
+For production environments, it is recommended to access DNS Resolver through a subdomain with HTTPS enabled.
+
+Use **Nginx as a reverse proxy** and configure an SSL certificate using Let's Encrypt.
+
+Example:
+
+```text
+https://dnsresolver.example.com
+```
+
+For Nginx and Python application deployment guidance, refer to:
+
+- [DigitalOcean – How To Set Up uWSGI and Nginx to Serve Python Apps on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-set-up-uwsgi-and-nginx-to-serve-python-apps-on-ubuntu-14-04)
+
+**Recommendation:** Use Gunicorn behind Nginx for production deployments rather than exposing Flask directly to the internet.
+
+## Stopping the Application
+
+To stop the DNS Resolver application:
+
+```bash
+./stop.sh
+```
+
+## Troubleshooting
+
+### 1. Check Application Logs
+
+If the application fails to start or behaves unexpectedly, check the error log:
+
+```bash
+tail -f /var/log/dnsresolver-error.log
+```
+
+### 2. Verify Python Dependencies
+
+Make sure the required Python packages are installed inside the active virtual environment.
+
+```bash
+source venv/bin/activate
+pip3 list
+```
+
+Required modules include:
+
+- `flask`
+- `dns.resolver` (provided by `dnspython`)
+- `whois` (provided by `python-whois`)
+- `gunicorn`
+
+### 3. Verify Application Port
+
+Check whether the application is listening on port `5000`:
+
+```bash
+sudo ss -lntp | grep :5000
+```
+
+### 4. Check Virtual Environment
+
+If Python modules are missing, activate the virtual environment and reinstall the dependencies:
+
+```bash
+source /opt/dnsresolver/venv/bin/activate
+pip3 install flask dnspython python-whois gunicorn
+```
+
+## Compatibility
+
+**Tested Environment:**
+
+- Ubuntu 24.04.x LTS
+
+The application is developed using Python and Flask. Although it has been tested on Ubuntu 24.04.x LTS, it should also work on other Linux distributions and macOS with the required Python dependencies installed.
+
+## License
+
+Refer to the repository's license file for licensing information.
