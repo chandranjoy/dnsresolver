@@ -96,7 +96,7 @@ Once the installation and configuration are complete, start the DNS Resolver app
 ./start.sh
 ```
 
-The application listens on port `5000` by default.
+The application listens on port `5001` by default.
 
 ### Access the Web Interface
 
