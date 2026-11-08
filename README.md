@@ -9,7 +9,7 @@ A Python-based DNS Resolver tool with a web-based user interface built using **F
 - Domain information lookup using WHOIS.
 - Lightweight Python application.
 - Easy deployment using a Python virtual environment.
-- Runs on port `5000` by default.
+- Runs on port `5001` by default.
 
 ## Prerequisites
 
@@ -103,12 +103,12 @@ The application listens on port `5000` by default.
 Open your browser and navigate to:
 
 ```text
-http://PUBLIC_IP:5000
+http://PUBLIC_IP:5001
 ```
 
 Replace `PUBLIC_IP` with your server's public IP address.
 
-**Note:** Ensure that port `5000` is allowed through your server firewall if accessing the application directly.
+**Note:** Ensure that port `5001` is allowed through your server firewall if accessing the application directly.
 
 ## Configure HTTPS Using Nginx
 
@@ -195,10 +195,10 @@ Required modules include:
 
 ### 3. Verify Application Port
 
-Check whether the application is listening on port `5000`:
+Check whether the application is listening on port `5001`:
 
 ```bash
-sudo ss -lntp | grep :5000
+sudo ss -lntp | grep :5001
 ```
 
 ### 4. Check Virtual Environment
