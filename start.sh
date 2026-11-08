@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# If installed as a systemd service, let systemd manage it.
+if command -v systemctl >/dev/null 2>&1 && systemctl is-enabled --quiet dnsresolver 2>/dev/null; then
+    exec systemctl start dnsresolver
+fi
 log_file="/var/log/dnsresolver-error.log"
 app_dir="/opt/dnsresolver"
 app_port="5001"

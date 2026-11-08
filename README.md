@@ -136,6 +136,37 @@ To stop the DNS Resolver application:
 ./stop.sh
 ```
 
+## Restarting the Application
+
+To restart the app (e.g. after changing code or `.env`):
+
+```bash
+./restart.sh
+```
+
+## Start Automatically on Server Boot (systemd)
+
+Make sure `/opt/dnsresolver/.env` contains `SECRET_KEY` and `gunicorn` is installed in the virtual environment, then run:
+
+```bash
+sudo ./install-service.sh
+```
+
+This installs `dnsresolver.service`, enables it at boot and starts it. Once installed, `start.sh`, `stop.sh` and `restart.sh` hand off to systemctl automatically (run them with `sudo`), or manage the service directly:
+
+```bash
+sudo systemctl status dnsresolver
+sudo systemctl restart dnsresolver
+sudo journalctl -u dnsresolver
+```
+
+To remove the service:
+
+```bash
+sudo systemctl disable --now dnsresolver
+sudo rm /etc/systemd/system/dnsresolver.service
+```
+
 ## Troubleshooting
 
 ### 1. Check Application Logs

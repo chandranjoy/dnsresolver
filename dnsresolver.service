@@ -1,0 +1,20 @@
+[Unit]
+Description=dnsresolver (Flask DNS lookup tool via gunicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs as root to match the existing start.sh setup (log file in /var/log).
+# To run unprivileged, change User/Group and chown /opt/dnsresolver and the log file.
+User=root
+Group=root
+WorkingDirectory=/opt/dnsresolver
+# Provides SECRET_KEY. The service will not start if this file is missing.
+EnvironmentFile=/opt/dnsresolver/.env
+ExecStart=/opt/dnsresolver/venv/bin/gunicorn --bind 127.0.0.1:5001 app:app --error-logfile /var/log/dnsresolver-error.log --log-level error
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
